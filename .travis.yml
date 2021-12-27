@@ -21,11 +21,7 @@ script:
 - ./hack/build/restore-operator/build
 deploy:
 - provider: script
-  skip_cleanup: true
-  script:
-  - export VERSION=$(git describe --tags --always --dirty="-dev")
-  - echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
-  - IMAGE=form3tech/etcd-operator:$VERSION ./hack/build/docker_push
+  script: bash ./hack/deploy.sh
   on:
     tags: true
     condition: $TRAVIS_OS_NAME = linux

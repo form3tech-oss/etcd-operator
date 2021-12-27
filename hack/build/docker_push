@@ -13,4 +13,4 @@ docker build --tag "${IMAGE}" -f hack/build/Dockerfile . 1>/dev/null
 # For gcr users, do "gcloud docker -a" to have access.
 
 echo "pushing container..."
-# docker push "${IMAGE}" 1>/dev/null
+docker push "${IMAGE}" 1>/dev/null

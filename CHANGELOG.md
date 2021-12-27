@@ -1,8 +1,9 @@
-## [Unreleased]
+## [Release 0.9.4-1]
 
 ### Added
 
 - Added `spec.Pod.ClusterDomain` to explicitly set the cluster domain used for the etcd member URLs. [#2082](https://github.com/coreos/etcd-operator/pull/2082)
+- Added the fields `spec.pod.hostNetwork` and `spec.pod.dnsPolicy` to the `PodPolicy` of the `EtcdCluster`. [#1](https://github.com/form3tech-oss/etcd-operator/pull/1)
 
 ### Changed
 
@@ -10,7 +11,7 @@
 
 ### Fixed
 
-- Don't expose unready nodes via client service. [#2063](https://github.com/coreos/etcd-operator/pull/2063)
+- Don't expose unready nodes via client service. [#2063](https://github.com/coreos/etcd-operator/pull/2063) and [#4](https://github.com/form3tech-oss/etcd-operator/pull/4)
 - Azure blob storage: use correct list prefix [#2071](https://github.com/coreos/etcd-operator/pull/2071)
 
 ### Deprecated

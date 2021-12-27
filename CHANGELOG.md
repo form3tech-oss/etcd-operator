@@ -6,6 +6,9 @@
 
 ### Changed
 
+- Update Go version to 1.17.5
+- Update k8s to 1.22.5
+
 ### Removed
 
 ### Fixed

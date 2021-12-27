@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -30,7 +29,7 @@ import (
 	"github.com/pborman/uuid"
 
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -232,15 +231,12 @@ func newEtcdServiceManifest(svcName, clusterName, clusterIP string, ports []v1.S
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   svcName,
 			Labels: labels,
-			Annotations: map[string]string{
-				TolerateUnreadyEndpointsAnnotation: strconv.FormatBool(publishNotReadyAddresses),
-			},
 		},
 		Spec: v1.ServiceSpec{
-			Ports:     ports,
-			Selector:  labels,
-			ClusterIP: clusterIP,
-			// PublishNotReadyAddresses: publishNotReadyAddresses, // TODO(ckoehn): Activate once TolerateUnreadyEndpointsAnnotation is deprecated.
+			Ports:                    ports,
+			Selector:                 labels,
+			ClusterIP:                clusterIP,
+			PublishNotReadyAddresses: publishNotReadyAddresses,
 		},
 	}
 	return svc

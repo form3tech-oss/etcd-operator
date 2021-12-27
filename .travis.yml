@@ -3,7 +3,7 @@ os: linux
 dist: bionic
 language: go
 go:
-- 1.17.x
+- 1.11.5
 services:
 - docker
 env:

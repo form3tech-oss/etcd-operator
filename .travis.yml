@@ -1,0 +1,28 @@
+---
+os: linux
+dist: bionic
+language: go
+go:
+- 1.17.x
+services:
+- docker
+env:
+- GO111MODULE=off
+go_import_path: github.com/coreos/etcd-operator
+before_install: go get -u github.com/golang/dep/cmd/dep
+install:
+- ./hack/update_vendor.sh
+script:
+- ./hack/build/operator/build
+- ./hack/build/backup-operator/build
+- ./hack/build/restore-operator/build
+deploy:
+- provider: script
+  skip_cleanup: true
+  script:
+  - export VERSION=$(git describe --tags --always --dirty="-dev")
+  - echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
+  - IMAGE=form3tech/etcd-operator:$VERSION ./hack/build/docker_push
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = linux

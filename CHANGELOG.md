@@ -1,3 +1,15 @@
+## [Unreleased]
+
+### Added
+
+- Added `recover-quorum-loss` CLI flag, to have etcd-operator automatically remove dead members even when quorum is lost, and then add new ones up to cluster desired size. This is useful for cases where data loss is acceptable and availability of the cluster is prefered. E.g. when etcd cluster is used as a Cilium backend, complete data loss is acceptable, cilium agents will recover the data. [#12](https://github.com/form3tech-oss/etcd-operator/pull/12)
+
+### Changed
+
+### Removed
+
+### Fixed
+
 ## [Release 0.9.4-1]
 
 ### Added

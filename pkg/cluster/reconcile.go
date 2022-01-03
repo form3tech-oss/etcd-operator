@@ -71,7 +71,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 // 1. Remove all pods from running set that does not belong to member set.
 // 2. L consist of remaining pods of runnings
 // 3. If L = members, the current state matches the membership state. END.
-// 4. If len(L) < len(members)/2 + 1, return quorum lost error.
+// 4. If len(L) < len(members)/2 + 1, return quorum lost error or ignore depending on recover-quorum-loss flag.
 // 5. Add one missing member. END.
 func (c *Cluster) reconcileMembers(running etcdutil.MemberSet) error {
 	c.logger.Infof("running members: %s", running)
@@ -92,7 +92,7 @@ func (c *Cluster) reconcileMembers(running etcdutil.MemberSet) error {
 		return c.resize()
 	}
 
-	if L.Size() < c.members.Size()/2+1 {
+	if (L.Size() < c.members.Size()/2+1) && !c.config.RecoverQuorumLoss {
 		return ErrLostQuorum
 	}
 

@@ -59,6 +59,8 @@ type Config struct {
 
 	KubeCli   kubernetes.Interface
 	EtcdCRCli versioned.Interface
+
+	RecoverQuorumLoss bool
 }
 
 type Cluster struct {

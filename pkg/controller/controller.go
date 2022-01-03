@@ -44,13 +44,14 @@ type Controller struct {
 }
 
 type Config struct {
-	Namespace      string
-	ClusterWide    bool
-	ServiceAccount string
-	KubeCli        kubernetes.Interface
-	KubeExtCli     apiextensionsclient.Interface
-	EtcdCRCli      versioned.Interface
-	CreateCRD      bool
+	Namespace         string
+	ClusterWide       bool
+	ServiceAccount    string
+	KubeCli           kubernetes.Interface
+	KubeExtCli        apiextensionsclient.Interface
+	EtcdCRCli         versioned.Interface
+	CreateCRD         bool
+	RecoverQuorumLoss bool
 }
 
 func New(cfg Config) *Controller {
@@ -121,9 +122,10 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 
 func (c *Controller) makeClusterConfig() cluster.Config {
 	return cluster.Config{
-		ServiceAccount: c.Config.ServiceAccount,
-		KubeCli:        c.Config.KubeCli,
-		EtcdCRCli:      c.Config.EtcdCRCli,
+		ServiceAccount:    c.Config.ServiceAccount,
+		KubeCli:           c.Config.KubeCli,
+		EtcdCRCli:         c.Config.EtcdCRCli,
+		RecoverQuorumLoss: c.Config.RecoverQuorumLoss,
 	}
 }
 

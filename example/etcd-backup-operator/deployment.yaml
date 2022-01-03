@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: etcd-backup-operator
-        image: form3tech/etcd-operator:v0.9.4-1
+        image: form3tech/etcd-operator:v0.9.4-2
         command:
         - etcd-backup-operator
         env:

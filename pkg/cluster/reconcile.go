@@ -71,7 +71,7 @@ func (c *Cluster) reconcile(pods []*v1.Pod) error {
 // 1. Remove all pods from running set that does not belong to member set.
 // 2. L consist of remaining pods of runnings
 // 3. If L = members, the current state matches the membership state. END.
-// 4. If len(L) < len(members)/2 + 1, return quorum lost error or ignore depending on recover-quorum-loss flag.
+// 4. If len(L) < len(members)/2 + 1, return quorum lost error or reinitialize the cluster, depending on recover-quorum-loss flag.
 // 5. Add one missing member. END.
 func (c *Cluster) reconcileMembers(running etcdutil.MemberSet) error {
 	c.logger.Infof("running members: %s", running)
@@ -92,13 +92,33 @@ func (c *Cluster) reconcileMembers(running etcdutil.MemberSet) error {
 		return c.resize()
 	}
 
-	if (L.Size() < c.members.Size()/2+1) && !c.config.RecoverQuorumLoss {
+	// if cluster still has quorum, but there are some dead members, remove them so they can be replaced
+	if L.Size() >= c.members.Size()/2+1 {
+		c.logger.Infof("removing one dead member")
+		// remove dead members that doesn't have any running pods before doing resizing.
+		return c.removeDeadMember(c.members.Diff(L).PickOne())
+	}
+
+	// quorum is lost and cluster shouldn't be automatically recovered, fail
+	if !c.config.RecoverQuorumLoss {
 		return ErrLostQuorum
 	}
 
-	c.logger.Infof("removing one dead member")
-	// remove dead members that doesn't have any running pods before doing resizing.
-	return c.removeDeadMember(c.members.Diff(L).PickOne())
+	// quorum is lost, autorecover //
+
+	// Remove any still live Pods
+	for l := range L {
+		if err := c.removePod(l); err != nil {
+			return err
+		}
+	}
+
+	// Reinitialize the cluster again
+	if err := c.setup(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Cluster) resize() error {

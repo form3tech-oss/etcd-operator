@@ -1,3 +1,15 @@
+## [Release 0.9.4-3]
+
+### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+- Fixed quorum loss auto-recovery logic, not to try to remove dead members when quorum is lost, but to reinitialize the cluster instead [#14](https://github.com/form3tech-oss/etcd-operator/pull/14)
+
 ## [Release 0.9.4-2]
 
 ### Added

@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-vendor/k8s.io/code-generator/generate-groups.sh \
+bash vendor/k8s.io/code-generator/generate-groups.sh \
   "all" \
   "github.com/coreos/etcd-operator/pkg/generated" \
   "github.com/coreos/etcd-operator/pkg/apis" \

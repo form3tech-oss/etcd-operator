@@ -15,6 +15,7 @@
 package s3factory
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -77,7 +78,7 @@ func setupAWSConfig(kubecli kubernetes.Interface, ns, secret, endpoint, configDi
 
 	options.Config.S3ForcePathStyle = &forcePathStyle
 
-	se, err := kubecli.CoreV1().Secrets(ns).Get(secret, metav1.GetOptions{})
+	se, err := kubecli.CoreV1().Secrets(ns).Get(context.TODO(), secret, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("setup AWS config failed: get k8s secret failed: %v", err)
 	}

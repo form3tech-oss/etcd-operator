@@ -3,18 +3,17 @@ os: linux
 dist: bionic
 language: go
 go:
-- 1.11.5
+- 1.17.5
 services:
 - docker
-env:
-- GO111MODULE=off
 go_import_path: github.com/coreos/etcd-operator
-before_install: go get -u github.com/golang/dep/cmd/dep
 install:
 - ./hack/update_vendor.sh
 cache:
   directories:
   - vendor
+  - $GOPATH/pkg/mod
+  - $HOME/.cache/go-build
 script:
 - ./hack/build/operator/build
 - ./hack/build/backup-operator/build

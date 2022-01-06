@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The etcd-operator Authors
+Copyright 2022 The etcd-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ import (
 )
 
 // EtcdClusterLister helps list EtcdClusters.
+// All objects returned here must be treated as read-only.
 type EtcdClusterLister interface {
 	// List lists all EtcdClusters in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta2.EtcdCluster, err error)
 	// EtcdClusters returns an object that can list and get EtcdClusters.
 	EtcdClusters(namespace string) EtcdClusterNamespaceLister
@@ -58,10 +60,13 @@ func (s *etcdClusterLister) EtcdClusters(namespace string) EtcdClusterNamespaceL
 }
 
 // EtcdClusterNamespaceLister helps list and get EtcdClusters.
+// All objects returned here must be treated as read-only.
 type EtcdClusterNamespaceLister interface {
 	// List lists all EtcdClusters in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta2.EtcdCluster, err error)
 	// Get retrieves the EtcdCluster from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta2.EtcdCluster, error)
 	EtcdClusterNamespaceListerExpansion
 }

@@ -1,9 +1,12 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: etcd-operator
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: etcd-operator
   template:
     metadata:
       labels:
@@ -11,11 +14,13 @@ spec:
     spec:
       containers:
       - name: etcd-operator
-        image: form3tech/etcd-operator:v0.9.4-3
+        image: form3tech/etcd-operator:v0.9.4-4
         command:
         - etcd-operator
         # Uncomment to act for resources in all namespaces. More information in doc/user/clusterwide.md
         #- -cluster-wide
+        # Uncomment to automatically recover from quorum loss
+        #- "--recover-quorum-loss=true"
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:

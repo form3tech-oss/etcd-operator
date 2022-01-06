@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The etcd-operator Authors
+Copyright 2022 The etcd-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ limitations under the License.
 package v1beta2
 
 import (
+	"context"
+	"time"
+
 	v1beta2 "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	scheme "github.com/coreos/etcd-operator/pkg/generated/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,15 +38,15 @@ type EtcdBackupsGetter interface {
 
 // EtcdBackupInterface has methods to work with EtcdBackup resources.
 type EtcdBackupInterface interface {
-	Create(*v1beta2.EtcdBackup) (*v1beta2.EtcdBackup, error)
-	Update(*v1beta2.EtcdBackup) (*v1beta2.EtcdBackup, error)
-	UpdateStatus(*v1beta2.EtcdBackup) (*v1beta2.EtcdBackup, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1beta2.EtcdBackup, error)
-	List(opts v1.ListOptions) (*v1beta2.EtcdBackupList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta2.EtcdBackup, err error)
+	Create(ctx context.Context, etcdBackup *v1beta2.EtcdBackup, opts v1.CreateOptions) (*v1beta2.EtcdBackup, error)
+	Update(ctx context.Context, etcdBackup *v1beta2.EtcdBackup, opts v1.UpdateOptions) (*v1beta2.EtcdBackup, error)
+	UpdateStatus(ctx context.Context, etcdBackup *v1beta2.EtcdBackup, opts v1.UpdateOptions) (*v1beta2.EtcdBackup, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta2.EtcdBackup, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1beta2.EtcdBackupList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta2.EtcdBackup, err error)
 	EtcdBackupExpansion
 }
 
@@ -62,113 +65,131 @@ func newEtcdBackups(c *EtcdV1beta2Client, namespace string) *etcdBackups {
 }
 
 // Get takes name of the etcdBackup, and returns the corresponding etcdBackup object, and an error if there is any.
-func (c *etcdBackups) Get(name string, options v1.GetOptions) (result *v1beta2.EtcdBackup, err error) {
+func (c *etcdBackups) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.EtcdBackup, err error) {
 	result = &v1beta2.EtcdBackup{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("etcdbackups").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of EtcdBackups that match those selectors.
-func (c *etcdBackups) List(opts v1.ListOptions) (result *v1beta2.EtcdBackupList, err error) {
+func (c *etcdBackups) List(ctx context.Context, opts v1.ListOptions) (result *v1beta2.EtcdBackupList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1beta2.EtcdBackupList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("etcdbackups").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Timeout(timeout).
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested etcdBackups.
-func (c *etcdBackups) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *etcdBackups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("etcdbackups").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Watch()
+		Timeout(timeout).
+		Watch(ctx)
 }
 
 // Create takes the representation of a etcdBackup and creates it.  Returns the server's representation of the etcdBackup, and an error, if there is any.
-func (c *etcdBackups) Create(etcdBackup *v1beta2.EtcdBackup) (result *v1beta2.EtcdBackup, err error) {
+func (c *etcdBackups) Create(ctx context.Context, etcdBackup *v1beta2.EtcdBackup, opts v1.CreateOptions) (result *v1beta2.EtcdBackup, err error) {
 	result = &v1beta2.EtcdBackup{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("etcdbackups").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(etcdBackup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a etcdBackup and updates it. Returns the server's representation of the etcdBackup, and an error, if there is any.
-func (c *etcdBackups) Update(etcdBackup *v1beta2.EtcdBackup) (result *v1beta2.EtcdBackup, err error) {
+func (c *etcdBackups) Update(ctx context.Context, etcdBackup *v1beta2.EtcdBackup, opts v1.UpdateOptions) (result *v1beta2.EtcdBackup, err error) {
 	result = &v1beta2.EtcdBackup{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("etcdbackups").
 		Name(etcdBackup.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(etcdBackup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *etcdBackups) UpdateStatus(etcdBackup *v1beta2.EtcdBackup) (result *v1beta2.EtcdBackup, err error) {
+func (c *etcdBackups) UpdateStatus(ctx context.Context, etcdBackup *v1beta2.EtcdBackup, opts v1.UpdateOptions) (result *v1beta2.EtcdBackup, err error) {
 	result = &v1beta2.EtcdBackup{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("etcdbackups").
 		Name(etcdBackup.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(etcdBackup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the etcdBackup and deletes it. Returns an error if one occurs.
-func (c *etcdBackups) Delete(name string, options *v1.DeleteOptions) error {
+func (c *etcdBackups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("etcdbackups").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *etcdBackups) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *etcdBackups) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	var timeout time.Duration
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("etcdbackups").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
-		Body(options).
-		Do().
+		VersionedParams(&listOpts, scheme.ParameterCodec).
+		Timeout(timeout).
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched etcdBackup.
-func (c *etcdBackups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta2.EtcdBackup, err error) {
+func (c *etcdBackups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta2.EtcdBackup, err error) {
 	result = &v1beta2.EtcdBackup{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("etcdbackups").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

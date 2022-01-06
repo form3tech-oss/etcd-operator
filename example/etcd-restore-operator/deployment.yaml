@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: etcd-restore-operator
-        image: form3tech/etcd-operator:v0.9.4-3
+        image: form3tech/etcd-operator:v0.9.4-4
         command:
         - etcd-restore-operator
         env:

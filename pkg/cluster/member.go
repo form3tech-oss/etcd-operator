@@ -19,8 +19,8 @@ import (
 
 	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
 	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/pkg/errors"
+	pb "go.etcd.io/etcd/api/v3/etcdserverpb"
 
 	"k8s.io/api/core/v1"
 )
@@ -73,7 +73,7 @@ func podsToMemberSet(pods []*v1.Pod, sc bool) etcdutil.MemberSet {
 	return members
 }
 
-func getMemberName(m *etcdserverpb.Member, clusterName string) (string, error) {
+func getMemberName(m *pb.Member, clusterName string) (string, error) {
 	name, err := etcdutil.MemberNameFromPeerURL(m.PeerURLs[0])
 	if err != nil {
 		return "", newFatalError(fmt.Sprintf("invalid member peerURL (%s): %v", m.PeerURLs[0], err))

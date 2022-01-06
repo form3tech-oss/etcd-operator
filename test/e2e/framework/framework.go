@@ -16,6 +16,7 @@ package framework
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"os/exec"
@@ -30,7 +31,7 @@ import (
 	"github.com/coreos/etcd-operator/test/e2e/e2eutil"
 
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -95,7 +96,7 @@ func teardown() error {
 	if err != nil {
 		return err
 	}
-	err = Global.KubeClient.CoreV1().Services(Global.Namespace).Delete(etcdRestoreOperatorServiceName, metav1.NewDeleteOptions(1))
+	err = Global.KubeClient.CoreV1().Services(Global.Namespace).Delete(context.TODO(), etcdRestoreOperatorServiceName, *metav1.NewDeleteOptions(1))
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete etcd restore operator service: %v", err)
 	}
@@ -207,14 +208,14 @@ func (f *Framework) DeleteEtcdOperatorCompletely() error {
 }
 
 func (f *Framework) deleteOperatorCompletely(name string) error {
-	err := f.KubeClient.CoreV1().Pods(f.Namespace).Delete(name, metav1.NewDeleteOptions(1))
+	err := f.KubeClient.CoreV1().Pods(f.Namespace).Delete(context.TODO(), name, *metav1.NewDeleteOptions(1))
 	if err != nil {
 		return err
 	}
 	// Grace period isn't exactly accurate. It took ~10s for operator pod to completely disappear.
 	// We work around by increasing the wait time. Revisit this later.
 	err = retryutil.Retry(5*time.Second, 6, func() (bool, error) {
-		_, err := f.KubeClient.CoreV1().Pods(f.Namespace).Get(name, metav1.GetOptions{})
+		_, err := f.KubeClient.CoreV1().Pods(f.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err == nil {
 			return false, nil
 		}
@@ -243,7 +244,7 @@ func (f *Framework) SetupEtcdRestoreOperatorService() error {
 			}},
 		},
 	}
-	_, err := f.KubeClient.CoreV1().Services(f.Namespace).Create(svc)
+	_, err := f.KubeClient.CoreV1().Services(f.Namespace).Create(context.TODO(), svc, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("create restore-operator service failed: %v", err)
 	}

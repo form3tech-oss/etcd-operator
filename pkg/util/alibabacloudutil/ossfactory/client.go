@@ -15,6 +15,7 @@
 package ossfactory
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -37,7 +38,7 @@ func NewClientFromSecret(kubecli kubernetes.Interface, namespace, endpoint, ossS
 		}
 	}()
 
-	se, err := kubecli.CoreV1().Secrets(namespace).Get(ossSecret, metav1.GetOptions{})
+	se, err := kubecli.CoreV1().Secrets(namespace).Get(context.TODO(), ossSecret, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s secret: %v", err)
 	}

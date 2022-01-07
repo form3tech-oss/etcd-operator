@@ -60,7 +60,7 @@ func main() {
 	_, informer := cache.NewIndexerInformer(podListWatcher, &v1.Pod{}, 0, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			go func(pod *v1.Pod, namespace, logsDir string) {
-				watcher, err := kubecli.CoreV1().Pods(namespace).Watch(metav1.SingleObject(metav1.ObjectMeta{Name: pod.Name}))
+				watcher, err := kubecli.CoreV1().Pods(namespace).Watch(context.TODO(), metav1.SingleObject(metav1.ObjectMeta{Name: pod.Name}))
 				if err != nil {
 					logrus.Errorf("failed to watch for pod (%s): %v", pod.Name, err)
 					return
@@ -83,7 +83,7 @@ func main() {
 					go func(c v1.Container) {
 						logOption := &v1.PodLogOptions{Follow: true, Container: c.Name}
 						req := kubecli.CoreV1().Pods(namespace).GetLogs(pod.Name, logOption)
-						readCloser, err := req.Stream()
+						readCloser, err := req.Stream(context.TODO())
 						if err != nil {
 							logrus.Errorf("failed to open stream for pod (%s): %v", pod.Name, err)
 							return

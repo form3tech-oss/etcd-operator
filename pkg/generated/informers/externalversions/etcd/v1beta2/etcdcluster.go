@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The etcd-operator Authors
+Copyright 2022 The etcd-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"context"
 	time "time"
 
 	etcdv1beta2 "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
@@ -61,13 +62,13 @@ func NewFilteredEtcdClusterInformer(client versioned.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.EtcdV1beta2().EtcdClusters(namespace).List(options)
+				return client.EtcdV1beta2().EtcdClusters(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.EtcdV1beta2().EtcdClusters(namespace).Watch(options)
+				return client.EtcdV1beta2().EtcdClusters(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&etcdv1beta2.EtcdCluster{},

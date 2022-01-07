@@ -41,7 +41,7 @@ func NewClientFromSecret(ctx context.Context, kubecli kubernetes.Interface, name
 	}()
 
 	var authOptions []option.ClientOption
-	if se, err := kubecli.CoreV1().Secrets(namespace).Get(gcsSecret, metav1.GetOptions{}); err == nil {
+	if se, err := kubecli.CoreV1().Secrets(namespace).Get(context.TODO(), gcsSecret, metav1.GetOptions{}); err == nil {
 		if accessToken, ok := se.Data[api.GCPAccessToken]; ok {
 			authOptions = append(authOptions, option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: string(accessToken)})))
 		} else if credentialsJson, ok := se.Data[api.GCPCredentialsJson]; ok {

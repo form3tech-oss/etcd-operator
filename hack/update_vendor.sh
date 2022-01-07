@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-dep ensure -v
+go mod vendor -v

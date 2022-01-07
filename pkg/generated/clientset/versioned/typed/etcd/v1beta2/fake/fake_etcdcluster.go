@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The etcd-operator Authors
+Copyright 2022 The etcd-operator Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1beta2 "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var etcdclustersResource = schema.GroupVersionResource{Group: "etcd.database.cor
 var etcdclustersKind = schema.GroupVersionKind{Group: "etcd.database.coreos.com", Version: "v1beta2", Kind: "EtcdCluster"}
 
 // Get takes name of the etcdCluster, and returns the corresponding etcdCluster object, and an error if there is any.
-func (c *FakeEtcdClusters) Get(name string, options v1.GetOptions) (result *v1beta2.EtcdCluster, err error) {
+func (c *FakeEtcdClusters) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.EtcdCluster, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(etcdclustersResource, c.ns, name), &v1beta2.EtcdCluster{})
 
@@ -50,7 +52,7 @@ func (c *FakeEtcdClusters) Get(name string, options v1.GetOptions) (result *v1be
 }
 
 // List takes label and field selectors, and returns the list of EtcdClusters that match those selectors.
-func (c *FakeEtcdClusters) List(opts v1.ListOptions) (result *v1beta2.EtcdClusterList, err error) {
+func (c *FakeEtcdClusters) List(ctx context.Context, opts v1.ListOptions) (result *v1beta2.EtcdClusterList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(etcdclustersResource, etcdclustersKind, c.ns, opts), &v1beta2.EtcdClusterList{})
 
@@ -72,14 +74,14 @@ func (c *FakeEtcdClusters) List(opts v1.ListOptions) (result *v1beta2.EtcdCluste
 }
 
 // Watch returns a watch.Interface that watches the requested etcdClusters.
-func (c *FakeEtcdClusters) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeEtcdClusters) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(etcdclustersResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a etcdCluster and creates it.  Returns the server's representation of the etcdCluster, and an error, if there is any.
-func (c *FakeEtcdClusters) Create(etcdCluster *v1beta2.EtcdCluster) (result *v1beta2.EtcdCluster, err error) {
+func (c *FakeEtcdClusters) Create(ctx context.Context, etcdCluster *v1beta2.EtcdCluster, opts v1.CreateOptions) (result *v1beta2.EtcdCluster, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(etcdclustersResource, c.ns, etcdCluster), &v1beta2.EtcdCluster{})
 
@@ -90,7 +92,7 @@ func (c *FakeEtcdClusters) Create(etcdCluster *v1beta2.EtcdCluster) (result *v1b
 }
 
 // Update takes the representation of a etcdCluster and updates it. Returns the server's representation of the etcdCluster, and an error, if there is any.
-func (c *FakeEtcdClusters) Update(etcdCluster *v1beta2.EtcdCluster) (result *v1beta2.EtcdCluster, err error) {
+func (c *FakeEtcdClusters) Update(ctx context.Context, etcdCluster *v1beta2.EtcdCluster, opts v1.UpdateOptions) (result *v1beta2.EtcdCluster, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(etcdclustersResource, c.ns, etcdCluster), &v1beta2.EtcdCluster{})
 
@@ -102,7 +104,7 @@ func (c *FakeEtcdClusters) Update(etcdCluster *v1beta2.EtcdCluster) (result *v1b
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeEtcdClusters) UpdateStatus(etcdCluster *v1beta2.EtcdCluster) (*v1beta2.EtcdCluster, error) {
+func (c *FakeEtcdClusters) UpdateStatus(ctx context.Context, etcdCluster *v1beta2.EtcdCluster, opts v1.UpdateOptions) (*v1beta2.EtcdCluster, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(etcdclustersResource, "status", c.ns, etcdCluster), &v1beta2.EtcdCluster{})
 
@@ -113,7 +115,7 @@ func (c *FakeEtcdClusters) UpdateStatus(etcdCluster *v1beta2.EtcdCluster) (*v1be
 }
 
 // Delete takes name of the etcdCluster and deletes it. Returns an error if one occurs.
-func (c *FakeEtcdClusters) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeEtcdClusters) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(etcdclustersResource, c.ns, name), &v1beta2.EtcdCluster{})
 
@@ -121,17 +123,17 @@ func (c *FakeEtcdClusters) Delete(name string, options *v1.DeleteOptions) error 
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeEtcdClusters) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(etcdclustersResource, c.ns, listOptions)
+func (c *FakeEtcdClusters) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(etcdclustersResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1beta2.EtcdClusterList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched etcdCluster.
-func (c *FakeEtcdClusters) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta2.EtcdCluster, err error) {
+func (c *FakeEtcdClusters) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta2.EtcdCluster, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(etcdclustersResource, c.ns, name, data, subresources...), &v1beta2.EtcdCluster{})
+		Invokes(testing.NewPatchSubresourceAction(etcdclustersResource, c.ns, name, pt, data, subresources...), &v1beta2.EtcdCluster{})
 
 	if obj == nil {
 		return nil, err

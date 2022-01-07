@@ -140,7 +140,7 @@ func (b *Backup) addFinalizerOfPeriodicBackupIfNeed(eb *api.EtcdBackup) (*api.Et
 	}
 	if !containsString(metadata.GetFinalizers(), "backup-operator-periodic") {
 		metadata.SetFinalizers(append(metadata.GetFinalizers(), "backup-operator-periodic"))
-		_, err := b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Update(ebNew.(*api.EtcdBackup))
+		_, err := b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Update(context.TODO(), ebNew.(*api.EtcdBackup), metav1.UpdateOptions{})
 		if err != nil {
 			return eb, err
 		}
@@ -163,7 +163,7 @@ func (b *Backup) removeFinalizerOfPeriodicBackup(eb *api.EtcdBackup) error {
 		finalizers = append(finalizers, finalizer)
 	}
 	metadata.SetFinalizers(finalizers)
-	_, err = b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Update(ebNew.(*api.EtcdBackup))
+	_, err = b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Update(context.TODO(), ebNew.(*api.EtcdBackup), metav1.UpdateOptions{})
 	return err
 }
 
@@ -179,7 +179,7 @@ func (b *Backup) periodicRunnerFunc(ctx context.Context, t *time.Ticker, eb *api
 			var err error
 			retryLimit := 5
 			for i := 1; i < retryLimit+1; i++ {
-				latestEb, err = b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Get(eb.Name, metav1.GetOptions{})
+				latestEb, err = b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Get(context.TODO(), eb.Name, metav1.GetOptions{})
 				if err != nil {
 					if apierrors.IsNotFound(err) {
 						b.logger.Infof("Could not find EtcdBackup. Stopping periodic backup for EtcdBackup CR %v",
@@ -214,7 +214,7 @@ func (b *Backup) reportBackupStatus(bs *api.BackupStatus, berr error, eb *api.Et
 		eb.Status.EtcdVersion = bs.EtcdVersion
 		eb.Status.LastSuccessDate = bs.LastSuccessDate
 	}
-	_, err := b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Update(eb)
+	_, err := b.backupCRCli.EtcdV1beta2().EtcdBackups(b.namespace).Update(context.TODO(), eb, metav1.UpdateOptions{})
 	if err != nil {
 		b.logger.Warningf("failed to update status of backup CR %v : (%v)", eb.Name, err)
 	}

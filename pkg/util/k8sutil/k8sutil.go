@@ -15,6 +15,7 @@
 package k8sutil
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -28,7 +29,7 @@ import (
 	"github.com/coreos/etcd-operator/pkg/util/retryutil"
 	"github.com/pborman/uuid"
 
-	appsv1beta1 "k8s.io/api/apps/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -184,7 +185,7 @@ func CreatePeerService(kubecli kubernetes.Interface, clusterName, ns string, own
 func createService(kubecli kubernetes.Interface, svcName, clusterName, ns, clusterIP string, ports []v1.ServicePort, owner metav1.OwnerReference, publishNotReadyAddresses bool) error {
 	svc := newEtcdServiceManifest(svcName, clusterName, clusterIP, ports, publishNotReadyAddresses)
 	addOwnerRefToObject(svc.GetObjectMeta(), owner)
-	_, err := kubecli.CoreV1().Services(ns).Create(svc)
+	_, err := kubecli.CoreV1().Services(ns).Create(context.TODO(), svc, metav1.CreateOptions{})
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -193,7 +194,7 @@ func createService(kubecli kubernetes.Interface, svcName, clusterName, ns, clust
 
 // CreateAndWaitPod creates a pod and waits until it is running
 func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, timeout time.Duration) (*v1.Pod, error) {
-	_, err := kubecli.CoreV1().Pods(ns).Create(pod)
+	_, err := kubecli.CoreV1().Pods(ns).Create(context.TODO(), pod, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +202,7 @@ func CreateAndWaitPod(kubecli kubernetes.Interface, ns string, pod *v1.Pod, time
 	interval := 5 * time.Second
 	var retPod *v1.Pod
 	err = retryutil.Retry(interval, int(timeout/(interval)), func() (bool, error) {
-		retPod, err = kubecli.CoreV1().Pods(ns).Get(pod.Name, metav1.GetOptions{})
+		retPod, err = kubecli.CoreV1().Pods(ns).Get(context.TODO(), pod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -399,12 +400,14 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 		},
 	}
 
-	if cs.Pod.DNSPolicy != "" {
-		pod.Spec.DNSPolicy = cs.Pod.DNSPolicy
-	}
+	if cs.Pod != nil {
+		if cs.Pod.DNSPolicy != "" {
+			pod.Spec.DNSPolicy = cs.Pod.DNSPolicy
+		}
 
-	if cs.Pod.HostNetwork {
-		pod.Spec.HostNetwork = true
+		if cs.Pod.HostNetwork {
+			pod.Spec.HostNetwork = true
+		}
 	}
 
 	SetEtcdVersion(pod, cs.Version)
@@ -487,18 +490,18 @@ func CreatePatch(o, n, datastruct interface{}) ([]byte, error) {
 	return strategicpatch.CreateTwoWayMergePatch(oldData, newData, datastruct)
 }
 
-func PatchDeployment(kubecli kubernetes.Interface, namespace, name string, updateFunc func(*appsv1beta1.Deployment)) error {
-	od, err := kubecli.AppsV1beta1().Deployments(namespace).Get(name, metav1.GetOptions{})
+func PatchDeployment(kubecli kubernetes.Interface, namespace, name string, updateFunc func(*appsv1.Deployment)) error {
+	od, err := kubecli.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	nd := od.DeepCopy()
 	updateFunc(nd)
-	patchData, err := CreatePatch(od, nd, appsv1beta1.Deployment{})
+	patchData, err := CreatePatch(od, nd, appsv1.Deployment{})
 	if err != nil {
 		return err
 	}
-	_, err = kubecli.AppsV1beta1().Deployments(namespace).Patch(name, types.StrategicMergePatchType, patchData)
+	_, err = kubecli.AppsV1().Deployments(namespace).Patch(context.TODO(), name, types.StrategicMergePatchType, patchData, metav1.PatchOptions{})
 	return err
 }
 

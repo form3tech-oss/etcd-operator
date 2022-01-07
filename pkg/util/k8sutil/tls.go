@@ -15,6 +15,8 @@
 package k8sutil
 
 import (
+	"context"
+
 	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +31,7 @@ type TLSData struct {
 
 // GetTLSDataFromSecret retrives the kubernete secret that contain etcd tls certs and put them into TLSData.
 func GetTLSDataFromSecret(kubecli kubernetes.Interface, ns, se string) (*TLSData, error) {
-	secret, err := kubecli.CoreV1().Secrets(ns).Get(se, metav1.GetOptions{})
+	secret, err := kubecli.CoreV1().Secrets(ns).Get(context.TODO(), se, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

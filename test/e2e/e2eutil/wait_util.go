@@ -29,7 +29,7 @@ import (
 	"github.com/coreos/etcd-operator/pkg/util/k8sutil"
 	"github.com/coreos/etcd-operator/pkg/util/retryutil"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -52,7 +52,7 @@ func CalculateRestoreWaitTime(needDataClone bool) int {
 func WaitUntilPodSizeReached(t *testing.T, kubeClient kubernetes.Interface, size, retries int, cl *api.EtcdCluster) ([]string, error) {
 	var names []string
 	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
-		podList, err := kubeClient.Core().Pods(cl.Namespace).List(k8sutil.ClusterListOpt(cl.Name))
+		podList, err := kubeClient.CoreV1().Pods(cl.Namespace).List(context.TODO(), k8sutil.ClusterListOpt(cl.Name))
 		if err != nil {
 			return false, err
 		}
@@ -85,7 +85,7 @@ func WaitUntilSizeReached(t *testing.T, crClient versioned.Interface, size, retr
 func WaitSizeAndVersionReached(t *testing.T, kubeClient kubernetes.Interface, version string, size, retries int, cl *api.EtcdCluster) error {
 	return retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
 		var names []string
-		podList, err := kubeClient.Core().Pods(cl.Namespace).List(k8sutil.ClusterListOpt(cl.Name))
+		podList, err := kubeClient.CoreV1().Pods(cl.Namespace).List(context.TODO(), k8sutil.ClusterListOpt(cl.Name))
 		if err != nil {
 			return false, err
 		}
@@ -121,7 +121,7 @@ func getVersionFromImage(image string) string {
 func waitSizeReachedWithAccept(t *testing.T, crClient versioned.Interface, size, retries int, cl *api.EtcdCluster, accepts ...acceptFunc) ([]string, error) {
 	var names []string
 	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
-		currCluster, err := crClient.EtcdV1beta2().EtcdClusters(cl.Namespace).Get(cl.Name, metav1.GetOptions{})
+		currCluster, err := crClient.EtcdV1beta2().EtcdClusters(cl.Namespace).Get(context.TODO(), cl.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -148,7 +148,7 @@ func waitSizeReachedWithAccept(t *testing.T, crClient versioned.Interface, size,
 func WaitUntilMembersWithNamesDeleted(t *testing.T, crClient versioned.Interface, retries int, cl *api.EtcdCluster, targetNames ...string) ([]string, error) {
 	var remaining []string
 	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
-		currCluster, err := crClient.EtcdV1beta2().EtcdClusters(cl.Namespace).Get(cl.Name, metav1.GetOptions{})
+		currCluster, err := crClient.EtcdV1beta2().EtcdClusters(cl.Namespace).Get(context.TODO(), cl.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -192,7 +192,7 @@ func waitResourcesDeleted(t *testing.T, kubeClient kubernetes.Interface, cl *api
 	}
 
 	err = retryutil.Retry(retryInterval, 3, func() (done bool, err error) {
-		list, err := kubeClient.CoreV1().Services(cl.Namespace).List(k8sutil.ClusterListOpt(cl.Name))
+		list, err := kubeClient.CoreV1().Services(cl.Namespace).List(context.TODO(), k8sutil.ClusterListOpt(cl.Name))
 		if err != nil {
 			return false, err
 		}
@@ -231,7 +231,7 @@ func WaitPodsDeletedCompletely(kubecli kubernetes.Interface, namespace string, r
 func waitPodsDeleted(kubecli kubernetes.Interface, namespace string, retries int, lo metav1.ListOptions, filters ...filterFunc) ([]*v1.Pod, error) {
 	var pods []*v1.Pod
 	err := retryutil.Retry(retryInterval, retries, func() (bool, error) {
-		podList, err := kubecli.CoreV1().Pods(namespace).List(lo)
+		podList, err := kubecli.CoreV1().Pods(namespace).List(context.TODO(), lo)
 		if err != nil {
 			return false, err
 		}
@@ -260,7 +260,7 @@ func WaitUntilOperatorReady(kubecli kubernetes.Interface, namespace, name string
 		LabelSelector: labels.SelectorFromSet(NameLabelSelector(name)).String(),
 	}
 	err := retryutil.Retry(10*time.Second, 6, func() (bool, error) {
-		podList, err := kubecli.CoreV1().Pods(namespace).List(lo)
+		podList, err := kubecli.CoreV1().Pods(namespace).List(context.TODO(), lo)
 		if err != nil {
 			return false, err
 		}

@@ -1,3 +1,20 @@
+## [Release 0.9.4-4]
+
+### Added
+
+- Support quorum loss recovery for 0 running pods case. [#15](https://github.com/form3tech-oss/etcd-operator/pull/15)
+
+### Changed
+
+- Update k8s to 1.22.5
+- Update Go to 1.17.5 and switch to Go modules
+
+### Removed
+
+### Fixed
+
+- Fix quorum loss auto-recovery logic, to recreate cluster using `cluster.create` instead of `cluster.setup`. [#15](https://github.com/form3tech-oss/etcd-operator/pull/15)
+
 ## [Release 0.9.4-3]
 
 ### Added

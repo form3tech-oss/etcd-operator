@@ -1,0 +1,43 @@
+
+name: CI
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '**'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      - name: Setup Golang
+        uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.2.0
+        with:
+          go-version-file: go.mod
+      - name: Update Vendor
+        run: go mod vendor -v
+      - name: Build Operator
+        run: ./hack/build/operator/build
+      - name: Build Backup Operator
+        run: ./hack/build/backup-operator/build
+      - name: Build Restore Operator
+        run: ./hack/build/restore-operator/build
+  deploy:
+    if: startsWith(github.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      - name: Setup Golang
+        uses: actions/setup-go@b22fbbc2921299758641fab08929b4ac52b32923 # v3.2.0
+        with:
+          go-version-file: go.mod
+      - name: Deploy
+        run: ./hack/deploy.sh
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}

@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kwatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 )
@@ -72,6 +74,26 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 	}
 
 	if clus.Status.IsFailed() {
+		// delete failed cluster
+		// the update event will re-create the cluster afterwards
+		if clus.Spec.FailurePolicy == api.FailurePolicyRecreate {
+			c.logger.Infof("deleting cluster due to failurePolicy=Recreate")
+			inst, ok := c.clusters[getNamespacedName(clus)]
+			if ok {
+				inst.Delete()
+			}
+			delete(c.clusters, getNamespacedName(clus))
+
+			// reset cluster status
+			clus.Status = api.ClusterStatus{}
+			_, err := c.EtcdCRCli.EtcdV1beta2().EtcdClusters(clus.Namespace).Update(context.Background(), clus, v1.UpdateOptions{})
+			if err != nil {
+				c.logger.Error(err)
+				return false, err
+			}
+			return false, nil
+		}
+
 		clustersFailed.Inc()
 		if event.Type == kwatch.Deleted {
 			delete(c.clusters, getNamespacedName(clus))

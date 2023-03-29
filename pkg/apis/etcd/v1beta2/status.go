@@ -179,6 +179,19 @@ func (cs *ClusterStatus) setClusterCondition(c ClusterCondition) {
 	}
 }
 
+func (cs *ClusterStatus) GetCondition(t ClusterConditionType) *ClusterCondition {
+	_, c := getClusterCondition(cs, t)
+	return c
+}
+
+func (cs *ClusterStatus) LastTransitionTime(t ClusterConditionType) (time.Time, error) {
+	_, c := getClusterCondition(cs, t)
+	if c == nil {
+		return time.Time{}, fmt.Errorf("no time set")
+	}
+	return time.Parse(time.RFC3339, c.LastTransitionTime)
+}
+
 func getClusterCondition(status *ClusterStatus, t ClusterConditionType) (int, *ClusterCondition) {
 	for i, c := range status.Conditions {
 		if t == c.Type {

@@ -105,6 +105,7 @@ func New(config Config, cl *api.EtcdCluster) *Cluster {
 	}
 
 	go func() {
+		// if setup fails, the controller will apply failurePolicy to this cluster
 		if err := c.setup(); err != nil {
 			c.logger.Errorf("cluster failed to setup: %v", err)
 			if c.status.Phase != api.ClusterPhaseFailed {
@@ -250,6 +251,7 @@ func (c *Cluster) run() {
 			}
 			if len(running) == 0 {
 				if c.config.RecoverQuorumLoss {
+					c.logger.Infof("recreating cluster due to quorum loss")
 					if err := c.create(); err != nil {
 						c.logger.Errorf("failed to recreate the cluster: %v", err)
 						break
@@ -261,6 +263,18 @@ func (c *Cluster) run() {
 				// TODO: how to handle this case?
 				c.logger.Warningf("all etcd pods are dead.")
 				break
+			}
+
+			// Recreate the cluster if it exceeds the scaling timeout
+			// this ensures that the operator does not get stuck in a create loop.
+			// If the etcd cluster is not accessible (e.g. due to intermittent network issues)
+			// then the operator is not able to recover from that - but this may be recoverable if pods get re-created.
+			scalingStart, err := c.status.LastTransitionTime(api.ClusterConditionScaling)
+			if c.cluster.Spec.ScalingTimeout != nil && err == nil && time.Since(scalingStart).Seconds() > c.cluster.Spec.ScalingTimeout.Seconds() {
+				c.logger.Infof("scaling timeout reached, cluster creation failed")
+				c.status.SetReason("scaling timeout reached")
+				c.reportFailedStatus()
+				continue
 			}
 
 			// On controller restore, we could have "members == nil"

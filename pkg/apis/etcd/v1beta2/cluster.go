@@ -18,7 +18,7 @@ import (
 	"errors"
 	"strings"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -91,6 +91,15 @@ type ClusterSpec struct {
 
 	// Paused is to pause the control of the operator for the etcd cluster.
 	Paused bool `json:"paused,omitempty"`
+
+	// ScalingTimeout defines how long a cluster is allowed to stay in scaling mode
+	// If the cluster exceeds the timeout it goes into a failed state.
+	// If not set it can stay there indefinitely.
+	ScalingTimeout *metav1.Duration `json:"scalingTimeout,omitempty"`
+
+	// FailurePolicy defines how to handle a failed cluster
+	// Defaults to retain the cluster state on failure
+	FailurePolicy FailurePolicy `json:"failurePolicy,omitempty"`
 
 	// Pod defines the policy to create pod for the etcd pod.
 	//
@@ -169,6 +178,13 @@ type PodPolicy struct {
 	// dnsPolicy will set dnsPolicy: <whatever> in podspec
 	DNSPolicy v1.DNSPolicy `json:"dnsPolicy,omitempty"`
 }
+
+type FailurePolicy string
+
+const (
+	FailurePolicyRetain   FailurePolicy = "Retain"
+	FailurePolicyRecreate FailurePolicy = "Recreate"
+)
 
 // TODO: move this to initializer
 func (c *ClusterSpec) Validate() error {

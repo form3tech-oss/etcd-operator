@@ -79,7 +79,7 @@ func main() {
 	}
 
 	rl, err := resourcelock.New(
-		resourcelock.EndpointsResourceLock,
+		resourcelock.EndpointsLeasesResourceLock,
 		namespace,
 		"etcd-restore-operator",
 		kubecli.CoreV1(),

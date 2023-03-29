@@ -66,7 +66,7 @@ func main() {
 
 	kubecli := k8sutil.MustNewKubeClient()
 	rl, err := resourcelock.New(
-		resourcelock.EndpointsResourceLock,
+		resourcelock.EndpointsLeasesResourceLock,
 		namespace,
 		"etcd-backup-operator",
 		kubecli.CoreV1(),

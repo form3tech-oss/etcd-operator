@@ -16,7 +16,9 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
@@ -31,7 +33,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var initRetryWaitTime = 30 * time.Second
+var (
+	initRetryWaitTime      = 30 * time.Second
+	terminationGracePeriod = int64(5)
+)
 
 type Event struct {
 	Type   kwatch.EventType
@@ -84,9 +89,18 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 			}
 			delete(c.clusters, getNamespacedName(clus))
 
+			// operator does not clean up resources on it's own, it relies
+			// on ownerReferences / k8s gc to cleanup orphaned pods
+			// for this case we want to clean up manually
+			c.logger.Info("cleaning up cluster resources")
+			err := c.cleanupClusterResources(clus)
+			if err != nil {
+				c.logger.Errorf("unable to cleanup cluster resources: %v", err)
+			}
+
 			// reset cluster status
 			clus.Status = api.ClusterStatus{}
-			_, err := c.EtcdCRCli.EtcdV1beta2().EtcdClusters(clus.Namespace).Update(context.Background(), clus, v1.UpdateOptions{})
+			_, err = c.EtcdCRCli.EtcdV1beta2().EtcdClusters(clus.Namespace).Update(context.Background(), clus, v1.UpdateOptions{})
 			if err != nil {
 				c.logger.Error(err)
 				return false, err
@@ -140,6 +154,30 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 		clustersTotal.Dec()
 	}
 	return false, nil
+}
+
+func (c *Controller) cleanupClusterResources(clus *api.EtcdCluster) error {
+	var errs []string
+	err := c.KubeCli.CoreV1().Pods(clus.Namespace).DeleteCollection(context.Background(), *v1.NewDeleteOptions(terminationGracePeriod), v1.ListOptions{
+		LabelSelector: "etcd_cluster=" + clus.Name,
+	})
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+	// peer service
+	err = c.KubeCli.CoreV1().Services(clus.Namespace).Delete(context.Background(), clus.Name, *v1.NewDeleteOptions(terminationGracePeriod))
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+	// client service
+	err = c.KubeCli.CoreV1().Services(clus.Namespace).Delete(context.Background(), k8sutil.ClientServiceName(clus.Name), *v1.NewDeleteOptions(terminationGracePeriod))
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ", "))
+	}
+	return nil
 }
 
 func (c *Controller) makeClusterConfig() cluster.Config {

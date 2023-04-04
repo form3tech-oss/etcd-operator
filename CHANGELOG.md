@@ -1,3 +1,54 @@
+## [Release 0.9.4-8]
+
+### Added
+
+### Changed
+
+- Use `system-cluster-critical` priority class for etcd members.
+
+### Removed
+
+### Fixed
+
+## [Release 0.9.4-7]
+
+### Added
+
+- Cleanup resources on cluster failure before retrying when `failurePolicy` is `Recreate`.
+
+### Changed
+
+- Update Go to 1.19.
+- Update k8s to 1.24.12.
+
+### Removed
+
+### Fixed
+
+## [Release 0.9.4-6]
+
+### Added
+
+- Support `failurePolicy` (`Retain`, `Recreate`) and `scalingTimeout` in EtcdCluster CRD spec.
+
+### Changed
+
+### Removed
+
+### Fixed
+
+## [Release 0.9.4-5]
+
+### Added
+
+### Changed
+
+- Migrate CI from Travis to GitHub Actions.
+
+### Removed
+
+### Fixed
+
 ## [Release 0.9.4-4]
 
 ### Added

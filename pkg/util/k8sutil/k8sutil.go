@@ -31,6 +31,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -182,6 +183,16 @@ func CreatePeerService(kubecli kubernetes.Interface, clusterName, ns string, own
 	return createService(kubecli, clusterName, clusterName, ns, v1.ClusterIPNone, ports, owner, true)
 }
 
+func CreatePDB(kubecli kubernetes.Interface, clusterName, ns string, clusterSize int, owner metav1.OwnerReference) error {
+	pdb := newEtcdPDBManifest(clusterName, clusterSize)
+	addOwnerRefToObject(pdb.GetObjectMeta(), owner)
+	_, err := kubecli.PolicyV1().PodDisruptionBudgets(ns).Create(context.TODO(), pdb, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
+}
+
 func createService(kubecli kubernetes.Interface, svcName, clusterName, ns, clusterIP string, ports []v1.ServicePort, owner metav1.OwnerReference, publishNotReadyAddresses bool) error {
 	svc := newEtcdServiceManifest(svcName, clusterName, clusterIP, ports, publishNotReadyAddresses)
 	addOwnerRefToObject(svc.GetObjectMeta(), owner)
@@ -241,6 +252,21 @@ func newEtcdServiceManifest(svcName, clusterName, clusterIP string, ports []v1.S
 		},
 	}
 	return svc
+}
+
+func newEtcdPDBManifest(clusterName string, clusterSize int) *policyv1.PodDisruptionBudget {
+	labels := LabelsForCluster(clusterName)
+	pdb := &policyv1.PodDisruptionBudget{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   clusterName,
+			Labels: labels,
+		},
+		Spec: policyv1.PodDisruptionBudgetSpec{
+			MinAvailable: &intstr.IntOrString{Type: intstr.Int, IntVal: int32(clusterSize/2 + 1)},
+			Selector:     &metav1.LabelSelector{MatchLabels: labels},
+		},
+	}
+	return pdb
 }
 
 // AddEtcdVolumeToPod abstract the process of appending volume spec to pod spec

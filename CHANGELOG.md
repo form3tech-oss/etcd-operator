@@ -1,3 +1,15 @@
+## [Release 0.9.4-9]
+
+### Added
+
+- Manage `PodDisruptionBudget` for etcd cluster Pods with quorum size as `minAvailable`.
+
+### Changed
+
+### Removed
+
+### Fixed
+
 ## [Release 0.9.4-8]
 
 ### Added

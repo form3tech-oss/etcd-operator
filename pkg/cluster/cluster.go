@@ -200,6 +200,10 @@ func (c *Cluster) run() {
 	c.status.ServiceName = k8sutil.ClientServiceName(c.cluster.Name)
 	c.status.ClientPort = k8sutil.EtcdClientPort
 
+	if err := c.setupPodDisruptionBudget(); err != nil {
+		c.logger.Errorf("fail to setup etcd PDB: %v", err)
+	}
+
 	c.status.SetPhase(api.ClusterPhaseRunning)
 	if err := c.updateCRStatus(); err != nil {
 		c.logger.Warningf("update initial CR status failed: %v", err)
@@ -386,6 +390,10 @@ func (c *Cluster) setupServices() error {
 	}
 
 	return k8sutil.CreatePeerService(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.AsOwner())
+}
+
+func (c *Cluster) setupPodDisruptionBudget() error {
+	return k8sutil.CreatePDB(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.Spec.Size, c.cluster.AsOwner())
 }
 
 func (c *Cluster) isPodPVEnabled() bool {

@@ -130,7 +130,7 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 
 		nc := cluster.New(c.makeClusterConfig(), clus)
 		if nc == nil {
-			return false, fmt.Errorf("cluster name cannot be more than %v characters long, please delete the CR\n", k8sutil.MaxNameLength)
+			return false, fmt.Errorf("cluster name cannot be more than %v characters long, please delete the CR", k8sutil.MaxNameLength)
 		}
 		c.clusters[getNamespacedName(clus)] = nc
 
@@ -158,7 +158,13 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 
 func (c *Controller) cleanupClusterResources(clus *api.EtcdCluster) error {
 	var errs []string
-	err := c.KubeCli.CoreV1().Pods(clus.Namespace).DeleteCollection(context.Background(), *v1.NewDeleteOptions(terminationGracePeriod), v1.ListOptions{
+	// pod disruption budget
+	err := c.KubeCli.PolicyV1().PodDisruptionBudgets(clus.Namespace).Delete(context.Background(), clus.Name, *v1.NewDeleteOptions(terminationGracePeriod))
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+	// etcd cluster member pods
+	err = c.KubeCli.CoreV1().Pods(clus.Namespace).DeleteCollection(context.Background(), *v1.NewDeleteOptions(terminationGracePeriod), v1.ListOptions{
 		LabelSelector: "etcd_cluster=" + clus.Name,
 	})
 	if err != nil {

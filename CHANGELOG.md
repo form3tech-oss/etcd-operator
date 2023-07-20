@@ -1,3 +1,16 @@
+## [Release 0.9.4-10]
+
+### Added
+
+- Option to disable `PodDisruptionBudget` (defaults to enabled).
+- Make the PriorityClass member pods are launched with configurable (currently pods get deployed with system-cluster-critical which remains the default)
+
+### Changed
+
+### Removed
+
+### Fixed
+
 ## [Release 0.9.4-9]
 
 ### Added

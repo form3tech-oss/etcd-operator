@@ -393,7 +393,12 @@ func (c *Cluster) setupServices() error {
 }
 
 func (c *Cluster) setupPodDisruptionBudget() error {
-	return k8sutil.CreatePDB(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.Spec.Size, c.cluster.AsOwner())
+	// default to true
+	enabled := c.cluster.Spec.EnablePDB == nil || *c.cluster.Spec.EnablePDB
+	if enabled {
+		return k8sutil.CreatePDB(c.config.KubeCli, c.cluster.Name, c.cluster.Namespace, c.cluster.Spec.Size, c.cluster.AsOwner())
+	}
+	return nil
 }
 
 func (c *Cluster) isPodPVEnabled() bool {

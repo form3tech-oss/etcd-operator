@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	defaultRepository  = "quay.io/coreos/etcd"
-	DefaultEtcdVersion = "3.2.13"
+	defaultRepository        = "quay.io/coreos/etcd"
+	DefaultEtcdVersion       = "3.2.13"
+	DefaultPriorityClassName = "system-cluster-critical"
 )
 
 var (
@@ -108,6 +109,10 @@ type ClusterSpec struct {
 
 	// etcd cluster TLS configuration
 	TLS *TLSPolicy `json:"TLS,omitempty"`
+
+	// If true, a PodDisruptionBudget will be created with quorum size as minAvailable.
+	// Defaults to true.
+	EnablePDB *bool `json:"enablePDB"`
 }
 
 // PodPolicy defines the policy to create pod for the etcd container.
@@ -177,6 +182,10 @@ type PodPolicy struct {
 
 	// dnsPolicy will set dnsPolicy: <whatever> in podspec
 	DNSPolicy v1.DNSPolicy `json:"dnsPolicy,omitempty"`
+
+	// The PriorityClassName to be assigned to member pods created by the operator.
+	// If unspeciifed, the default is "system-cluster-critical".
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 type FailurePolicy string
@@ -212,27 +221,37 @@ func (e *EtcdCluster) SetDefaults() {
 		c.Repository = defaultRepository
 	}
 
+	if c.EnablePDB == nil {
+		c.EnablePDB = new(bool)
+		*c.EnablePDB = true
+	}
+
 	if len(c.Version) == 0 {
 		c.Version = DefaultEtcdVersion
 	}
 
 	c.Version = strings.TrimLeft(c.Version, "v")
-
-	// convert PodPolicy.AntiAffinity to Pod.Affinity.PodAntiAffinity
-	// TODO: Remove this once PodPolicy.AntiAffinity is removed
-	if c.Pod != nil && c.Pod.AntiAffinity && c.Pod.Affinity == nil {
-		c.Pod.Affinity = &v1.Affinity{
-			PodAntiAffinity: &v1.PodAntiAffinity{
-				RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{
-					{
-						// set anti-affinity to the etcd pods that belongs to the same cluster
-						LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-							"etcd_cluster": e.Name,
-						}},
-						TopologyKey: "kubernetes.io/hostname",
+	if c.Pod != nil {
+		// convert PodPolicy.AntiAffinity to Pod.Affinity.PodAntiAffinity
+		// TODO: Remove this once PodPolicy.AntiAffinity is removed
+		if c.Pod.AntiAffinity && c.Pod.Affinity == nil {
+			c.Pod.Affinity = &v1.Affinity{
+				PodAntiAffinity: &v1.PodAntiAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{
+						{
+							// set anti-affinity to the etcd pods that belongs to the same cluster
+							LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+								"etcd_cluster": e.Name,
+							}},
+							TopologyKey: "kubernetes.io/hostname",
+						},
 					},
 				},
-			},
+			}
+		}
+
+		if len(c.Pod.PriorityClassName) == 0 {
+			c.Pod.PriorityClassName = DefaultPriorityClassName
 		}
 	}
 }

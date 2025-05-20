@@ -90,7 +90,7 @@ type Cluster struct {
 
 func New(config Config, cl *api.EtcdCluster) *Cluster {
 	lg := logrus.WithField("pkg", "cluster").WithField("cluster-name", cl.Name).WithField("cluster-namespace", cl.Namespace)
-	if len(cl.Name) > k8sutil.MaxNameLength || len(cl.GetZZZ_DeprecatedClusterName()) > k8sutil.MaxNameLength {
+	if len(cl.Name) > k8sutil.MaxNameLength {
 		return nil
 	}
 

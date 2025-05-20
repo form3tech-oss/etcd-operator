@@ -1,3 +1,16 @@
+## [Release 0.9.4-10]
+
+### Added
+
+### Changed
+
+- Update Go to 1.24.3.
+- Update k8s to 1.30.13.
+
+### Removed
+
+### Fixed
+
 ## [Release 0.9.4-9]
 
 ### Added

@@ -129,7 +129,10 @@ func (c *Cluster) setup() error {
 	case api.ClusterPhaseNone:
 		shouldCreateCluster = true
 	case api.ClusterPhaseCreating:
-		return errCreatedCluster
+		if c.status.Size == 0 {
+			return errCreatingCluster
+		}
+		shouldCreateCluster = false
 	case api.ClusterPhaseRunning:
 		shouldCreateCluster = false
 
@@ -253,18 +256,7 @@ func (c *Cluster) run() {
 				reconcileFailed.WithLabelValues("not all pods are running").Inc()
 				continue
 			}
-			if len(running) == 0 {
-				if c.config.RecoverQuorumLoss {
-					c.logger.Infof("recreating cluster due to quorum loss")
-					if err := c.create(); err != nil {
-						c.logger.Errorf("failed to recreate the cluster: %v", err)
-						break
-					}
-
-					continue
-				}
-
-				// TODO: how to handle this case?
+			if len(running) == 0 && !c.config.RecoverQuorumLoss {
 				c.logger.Warningf("all etcd pods are dead.")
 				break
 			}
@@ -282,10 +274,10 @@ func (c *Cluster) run() {
 			}
 
 			// On controller restore, we could have "members == nil"
-			if rerr != nil || c.members == nil {
-				rerr = c.updateMembers(podsToMemberSet(running, c.isSecureClient()))
-				if rerr != nil {
-					c.logger.Errorf("failed to update members: %v", rerr)
+			if c.members == nil {
+				err := c.updateMembers(podsToMemberSet(running, c.isSecureClient()))
+				if err != nil {
+					c.logger.Errorf("failed to update members: %v", err)
 					break
 				}
 			}

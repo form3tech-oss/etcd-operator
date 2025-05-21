@@ -86,6 +86,7 @@ func (c *Controller) handleClusterEvent(event *Event) (bool, error) {
 			inst, ok := c.clusters[getNamespacedName(clus)]
 			if ok {
 				inst.Delete()
+				clustersTotal.Dec()
 			}
 			delete(c.clusters, getNamespacedName(clus))
 

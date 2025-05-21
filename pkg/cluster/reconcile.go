@@ -16,7 +16,6 @@ package cluster
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
@@ -29,9 +28,6 @@ import (
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
-
-// ErrLostQuorum indicates that the etcd cluster lost its quorum.
-var ErrLostQuorum = errors.New("lost quorum")
 
 // reconcile reconciles cluster current state to desired state specified by spec.
 // - it tries to reconcile the cluster to desired size.
@@ -89,7 +85,7 @@ func (c *Cluster) reconcileMembers(running etcdutil.MemberSet) error {
 	}
 	L := running.Diff(unknownMembers)
 
-	if L.Size() == c.members.Size() {
+	if L.Size() > 0 && L.Size() == c.members.Size() {
 		return c.resize()
 	}
 
@@ -100,26 +96,8 @@ func (c *Cluster) reconcileMembers(running etcdutil.MemberSet) error {
 		return c.removeDeadMember(c.members.Diff(L).PickOne())
 	}
 
-	// quorum is lost and cluster shouldn't be automatically recovered, fail
-	if !c.config.RecoverQuorumLoss {
-		return ErrLostQuorum
-	}
-
-	// quorum is lost, autorecover //
-
-	// Remove any still live Pods
-	for l := range L {
-		if err := c.removePod(l); err != nil {
-			return err
-		}
-	}
-
-	// Reinitialize the cluster again
-	if err := c.create(); err != nil {
-		return err
-	}
-
-	return nil
+	// quorum is lost
+	return errQuorumLost
 }
 
 func (c *Cluster) resize() error {

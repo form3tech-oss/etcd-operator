@@ -11,6 +11,8 @@
 
 ### Fixed
 
+- Fix quorum loss auto-recovery logic, have `cluster.reconcileMembers` on quorum loss bubble up cluster to Failed Phase, and with that centralize auto-recovery, instead of doing partial cleanup + recovery into wrong Creating Phase. [#25](https://github.com/form3tech-oss/etcd-operator/pull/25)
+
 ## [Release 0.9.4-9]
 
 ### Added

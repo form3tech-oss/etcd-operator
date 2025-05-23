@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	errCreatedCluster = errors.New("cluster failed to be created")
+	errCreatingCluster = errors.New("cluster failed to be created")
+	errQuorumLost      = newFatalError("quorum was lost")
 )
 
 type fatalError struct {
